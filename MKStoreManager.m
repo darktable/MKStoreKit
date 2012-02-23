@@ -310,7 +310,8 @@ static MKStoreManager* _sharedStoreManager;
 		
 	isProductsAvailable = YES;    
     [[NSNotificationCenter defaultCenter] postNotificationName:kProductFetchedNotification 
-                                                        object:[NSNumber numberWithBool:isProductsAvailable]];
+                                                        object:[NSNumber numberWithBool:isProductsAvailable]
+                                                      userInfo:[self pricesDictionary]];
 }
 
 - (void)request:(SKRequest *)request didFailWithError:(NSError *)error
@@ -374,6 +375,8 @@ NSString *upgradePrice = [prices objectForKey:@"com.mycompany.upgrade"]
 	for(int i=0;i<[self.purchasableObjects count];i++)
 	{
 		SKProduct *product = [self.purchasableObjects objectAtIndex:i];
+        
+        NSMutableDictionary *productDict = [NSMutableDictionary dictionary];
 		
 		NSNumberFormatter *numberFormatter = [[NSNumberFormatter alloc] init];
 		[numberFormatter setFormatterBehavior:NSNumberFormatterBehavior10_4];
@@ -382,8 +385,12 @@ NSString *upgradePrice = [prices objectForKey:@"com.mycompany.upgrade"]
 		NSString *formattedString = [numberFormatter stringFromNumber:product.price];
         
         NSString *priceString = [NSString stringWithFormat:@"%@", formattedString];
-        [priceDict setObject:priceString forKey:product.productIdentifier]; 
         
+        [productDict setObject:priceString forKey:@"price"];
+        [productDict setObject:product.localizedTitle forKey:@"title"];
+        [productDict setObject:product.localizedDescription forKey:@"description"];
+        
+        [priceDict setObject:productDict forKey:product.productIdentifier];        
     }
     return priceDict;
 }
