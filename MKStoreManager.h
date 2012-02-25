@@ -71,8 +71,8 @@
 - (void) restorePreviousTransactionsOnComplete:(void (^)(void)) completionBlock
                                        onError:(void (^)(NSError*)) errorBlock;
 
-- (BOOL) canConsumeProduct:(NSString*) productName quantity:(int) quantity;
-- (BOOL) consumeProduct:(NSString*) productName quantity:(int) quantity;
+- (int) canConsumeProduct:(NSString*) productName quantity:(int) quantity;
+- (int) consumeProduct:(NSString*) productName quantity:(int) quantity;
 - (BOOL) isSubscriptionActive:(NSString*) featureId;
 //for testing proposes you can use this method to remove all the saved keychain data (saved purchases, etc.)
 - (BOOL) removeAllKeychainData;

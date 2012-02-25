@@ -372,6 +372,11 @@ NSString *upgradePrice = [prices objectForKey:@"com.mycompany.upgrade"]
 */
 - (NSMutableDictionary *)pricesDictionary {
     NSMutableDictionary *priceDict = [NSMutableDictionary dictionary];
+    
+    NSArray *consumables = [[[self storeKitItems] objectForKey:@"Consumables"] allKeys];
+    NSArray *nonConsumables = [[self storeKitItems] objectForKey:@"Non-Consumables"];
+    NSArray *subscriptions = [[[self storeKitItems] objectForKey:@"Subscriptions"] allKeys];
+     
 	for(int i=0;i<[self.purchasableObjects count];i++)
 	{
 		SKProduct *product = [self.purchasableObjects objectAtIndex:i];
@@ -389,6 +394,17 @@ NSString *upgradePrice = [prices objectForKey:@"com.mycompany.upgrade"]
         [productDict setObject:priceString forKey:@"price"];
         [productDict setObject:product.localizedTitle forKey:@"title"];
         [productDict setObject:product.localizedDescription forKey:@"description"];
+                
+        if ([consumables indexOfObject:product.productIdentifier] != NSNotFound) {
+            [productDict setObject:@"consumable" forKey:@"type"];
+        }
+        else if ([nonConsumables indexOfObject:product.productIdentifier] != NSNotFound) {
+            [productDict setObject:@"nonconsumable" forKey:@"type"];
+        }
+        else if ([subscriptions indexOfObject:product.productIdentifier] != NSNotFound) {
+            [productDict setObject:@"subscription" forKey:@"type"];
+        }
+
         
         [priceDict setObject:productDict forKey:product.productIdentifier];        
     }
@@ -468,32 +484,34 @@ NSString *upgradePrice = [prices objectForKey:@"com.mycompany.upgrade"]
 	}
 }
 
-- (BOOL) canConsumeProduct:(NSString*) productIdentifier
+- (int) canConsumeProduct:(NSString*) productIdentifier
 {
-	int count = [[MKStoreManager numberForKey:productIdentifier] intValue];
-	
-	return (count > 0);
-	
+	return [[MKStoreManager numberForKey:[productIdentifier lowercaseString]] intValue];
 }
 
-- (BOOL) canConsumeProduct:(NSString*) productIdentifier quantity:(int) quantity
+- (int) canConsumeProduct:(NSString*) productIdentifier quantity:(int) quantity
 {
-	int count = [[MKStoreManager numberForKey:productIdentifier] intValue];
-	return (count >= quantity);
+	int count = [[MKStoreManager numberForKey:[productIdentifier lowercaseString]] intValue];
+    
+    if (count >= quantity) {
+        return count - quantity;
+    }
+    
+	return -1;
 }
 
-- (BOOL) consumeProduct:(NSString*) productIdentifier quantity:(int) quantity
+- (int) consumeProduct:(NSString*) productIdentifier quantity:(int) quantity
 {
-	int count = [[MKStoreManager numberForKey:productIdentifier] intValue];
+	int count = [[MKStoreManager numberForKey:[productIdentifier lowercaseString]] intValue];
 	if(count < quantity)
 	{
-		return NO;
+		return -1;
 	}
 	else 
 	{
 		count -= quantity;
-        [MKStoreManager setObject:[NSNumber numberWithInt:count] forKey:productIdentifier];
-		return YES;
+        [MKStoreManager setObject:[NSNumber numberWithInt:count] forKey:[productIdentifier lowercaseString]];
+		return count;
 	}	
 }
 
@@ -525,7 +543,7 @@ NSString *upgradePrice = [prices objectForKey:@"com.mycompany.upgrade"]
              }
                                      onError:^(NSError* error)
              {
-                 NSLog(@"Unable to check for subscription validity right now");                                      
+                 NSLog(@"Unable to check for subscription validity right now %@", [error description]);                                      
              }]; 
         }
         
@@ -602,7 +620,7 @@ NSString *upgradePrice = [prices objectForKey:@"com.mycompany.upgrade"]
                  }
                  else
                  {
-                     NSLog(@"The receipt could not be verified");
+                     NSLog(@"The receipt could not be verified %@", [error description]);
                  }
              }];            
         }
@@ -623,7 +641,7 @@ NSString *upgradePrice = [prices objectForKey:@"com.mycompany.upgrade"]
     {
         NSDictionary *thisConsumableDict = [allConsumables objectForKey:productIdentifier];
         int quantityPurchased = [[thisConsumableDict objectForKey:@"Count"] intValue];
-        NSString* productPurchased = [thisConsumableDict objectForKey:@"Name"];
+        NSString* productPurchased = [[thisConsumableDict objectForKey:@"Name"] lowercaseString];
         
         int oldCount = [[MKStoreManager numberForKey:productPurchased] intValue];
         int newCount = oldCount + quantityPurchased;	
