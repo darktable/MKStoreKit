@@ -31,6 +31,7 @@
 
 #import "MKSKProduct.h"
 #import "NSData+Base64.h"
+#import "ODIN.h"
 
 static void (^onReviewRequestVerificationSucceeded)();
 static void (^onReviewRequestVerificationFailed)();
@@ -53,16 +54,7 @@ static NSMutableData *sDataFromConnection;
     if ([dev respondsToSelector:@selector(uniqueIdentifier)])
         uniqueID = [dev valueForKey:@"uniqueIdentifier"];
     else {
-        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-        id uuid = [defaults objectForKey:@"uniqueID"];
-        if (uuid)
-            uniqueID = (NSString *)uuid;
-        else {
-            CFStringRef cfUuid = CFUUIDCreateString(NULL, CFUUIDCreate(NULL));
-            uniqueID = (__bridge NSString *)cfUuid;
-            CFRelease(cfUuid);
-            [defaults setObject:uniqueID forKey:@"uniqueID"];
-        }
+        uniqueID = ODIN1();
     }
 	return uniqueID;
 	
